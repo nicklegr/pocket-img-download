@@ -17,6 +17,8 @@ def download_image(url)
   file_name.sub!(%r/:\w+$/, '') # twitpic ":large"
   file_name = "img/#{file_name}"
 
+  return if File.exist?(file_name)
+
   open(file_name, 'wb') do |output|
     open(url, allow_redirections: :safe) do |data|
       output.write(data.read)
