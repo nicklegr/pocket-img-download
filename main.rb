@@ -10,6 +10,9 @@ yaml = YAML.load_file('config.yaml')
 consumer_key = yaml['pocket']['consumer_key']
 access_token = yaml['pocket']['access_token']
 
+class DownloadError < RuntimeError
+end
+
 def download_image(url)
   file_name = File.basename(url)
 
@@ -40,11 +43,8 @@ module PicTwitter
     doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
     img = doc.css('img.large.media-slideshow-image[src]').first
 
-    if img
-      img['src']
-    else
-      nil
-    end
+    raise DownloadError unless img && img['src']
+    img['src']
   end
 end
 
@@ -60,11 +60,8 @@ module Instagram
     doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
     meta = doc.css('meta[property="og:image"]').first
 
-    if meta
-      meta['content']
-    else
-      nil
-    end
+    raise DownloadError unless meta && meta['content']
+    meta['content']
   end
 end
 
@@ -82,11 +79,8 @@ module Twitpic
     doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
     img = doc.css('div#media-full > img').first
 
-    if img
-      img['src']
-    else
-      nil
-    end
+    raise DownloadError unless img && img['src']
+    img['src']
   end
 end
 
@@ -120,7 +114,9 @@ info["list"].values.each do |e|
     download_image(PicTwitter.image_url(url)) if PicTwitter.support?(url)
     download_image(Instagram.image_url(url)) if Instagram.support?(url)
     download_image(Twitpic.image_url(url)) if Twitpic.support?(url)
+  rescue DownloadError => e
+    puts "download failed: #{url}: #{e}"
   rescue OpenURI::HTTPError => e
-    puts "download #{url} failed: #{e}"
+    puts "http request failed: #{url}: #{e}"
   end
 end
