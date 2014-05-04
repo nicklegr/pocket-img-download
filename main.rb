@@ -111,9 +111,27 @@ info["list"].values.each do |e|
   url = e['resolved_url']
 
   begin
-    download_image(PicTwitter.image_url(url)) if PicTwitter.support?(url)
-    download_image(Instagram.image_url(url)) if Instagram.support?(url)
-    download_image(Twitpic.image_url(url)) if Twitpic.support?(url)
+    downloaded = false
+
+    if PicTwitter.support?(url)
+      download_image(PicTwitter.image_url(url))
+      downloaded = true
+    end
+
+    if Instagram.support?(url)
+      download_image(Instagram.image_url(url))
+      downloaded = true
+    end
+
+    if Twitpic.support?(url)
+      download_image(Twitpic.image_url(url))
+      downloaded = true
+    end
+
+    if downloaded
+      # puts "modify #{e['item_id']}"
+      client.modify([ { action: 'archive', item_id: e['item_id'] } ])
+    end
   rescue DownloadError => e
     puts "download failed: #{url}: #{e}"
   rescue OpenURI::HTTPError => e
