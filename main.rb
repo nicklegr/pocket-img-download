@@ -41,10 +41,10 @@ module PicTwitter
     request_url += '/large'
 
     doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
-    img = doc.css('img.large.media-slideshow-image[src]').first
+    img = doc.css('a.media-thumbnail').first
 
-    raise DownloadError unless img && img['src']
-    img['src']
+    raise DownloadError unless img && img['data-url']
+    img['data-url'].sub(':large', ':orig')
   end
 end
 
