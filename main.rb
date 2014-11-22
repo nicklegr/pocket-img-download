@@ -16,8 +16,7 @@ end
 def download_image(url)
   file_name = File.basename(url)
 
-  file_name.sub!(%r/\?\w+$/, '') # query parameter
-  file_name.sub!(%r/:\w+$/, '') # twitpic ":large"
+  file_name.sub!(%r/\?.+$/, '') # query parameter
   file_name = "img/#{file_name}"
 
   return if File.exist?(file_name)
@@ -74,10 +73,9 @@ module Twitpic
     request_url = url.dup
     request_url.sub!(%r|/$|, '')
     request_url.sub!(%r|/full/?$|, '')
-    request_url += '/full'
 
     doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
-    img = doc.css('div#media-full > img').first
+    img = doc.css('div#media > img').first
 
     raise DownloadError unless img && img['src']
     img['src']
