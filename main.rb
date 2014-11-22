@@ -17,6 +17,7 @@ def download_image(url)
   file_name = File.basename(url)
 
   file_name.sub!(%r/\?.+$/, '') # query parameter
+  file_name.sub!(%r/:\w+$/, '') # pic.twitter.com ":orig"
   file_name = "img/#{file_name}"
 
   return if File.exist?(file_name)
@@ -33,17 +34,25 @@ module PicTwitter
     url.match(%r|^https?://twitter.com/\w+/status/\d+/photo/\d+|)
   end
 
-  def self.image_url(url)
-    request_url = url.dup
-    request_url.sub!(%r|/$|, '')
-    request_url.sub!(%r|/large/?$|, '')
-    request_url += '/large'
+  def self.image_urls(url)
+    doc = Nokogiri::HTML(open(url, allow_redirections: :safe))
 
-    doc = Nokogiri::HTML(open(request_url, allow_redirections: :safe))
+    img_urls = []
+
     img = doc.css('a.media-thumbnail').first
+    img_urls << img['data-url'] if img
 
-    raise DownloadError unless img && img['data-url']
-    img['data-url'].sub(':large', ':orig')
+    img = doc.css('div.media-thumbnail').each do |div|
+      img_urls << div['data-url']
+    end
+
+    img_urls.map! do |e|
+      e.sub(%r/:\w+$/, '') + ":orig"
+    end
+
+    raise DownloadError if img_urls.empty?
+
+    img_urls
   end
 end
 
@@ -52,7 +61,7 @@ module Instagram
     url.match(%r|^https?://instagram.com/p/\w+|)
   end
 
-  def self.image_url(url)
+  def self.image_urls(url)
     request_url = url.dup
     request_url.sub!(%r|[/#]$|, '')
 
@@ -60,7 +69,7 @@ module Instagram
     meta = doc.css('meta[property="og:image"]').first
 
     raise DownloadError unless meta && meta['content']
-    meta['content']
+    [ meta['content'] ]
   end
 end
 
@@ -69,7 +78,7 @@ module Twitpic
     url.match(%r|^https?://twitpic.com/\w+|)
   end
 
-  def self.image_url(url)
+  def self.image_urls(url)
     request_url = url.dup
     request_url.sub!(%r|/$|, '')
     request_url.sub!(%r|/full/?$|, '')
@@ -78,23 +87,37 @@ module Twitpic
     img = doc.css('div#media > img').first
 
     raise DownloadError unless img && img['src']
-    img['src']
+    [ img['src'] ]
   end
 end
 
 # test
-# puts PicTwitter.image_url('https://twitter.com/wata_ruh/status/460372514472882176/photo/1')
-# puts PicTwitter.image_url('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/')
-# puts PicTwitter.image_url('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large')
-# puts PicTwitter.image_url('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large/')
-# puts Instagram.image_url('http://instagram.com/p/nRuMujKpN2')
-# puts Instagram.image_url('http://instagram.com/p/nRuMujKpN2#')
-# puts Instagram.image_url('http://instagram.com/p/nRuMujKpN2/')
-# puts Instagram.image_url('http://instagram.com/p/nRuMujKpN2/#')
-# puts Twitpic.image_url('http://twitpic.com/d1ncvp')
-# puts Twitpic.image_url('http://twitpic.com/d1ncvp/')
-# puts Twitpic.image_url('http://twitpic.com/d1ncvp/full')
-# puts Twitpic.image_url('http://twitpic.com/d1ncvp/full/')
+# puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1')
+# puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/')
+# puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large')
+# puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large/')
+# puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2')
+# puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2#')
+# puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2/')
+# puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2/#')
+# puts Twitpic.image_urls('http://twitpic.com/d1ncvp')
+# puts Twitpic.image_urls('http://twitpic.com/d1ncvp/')
+# puts Twitpic.image_urls('http://twitpic.com/d1ncvp/full')
+# puts Twitpic.image_urls('http://twitpic.com/d1ncvp/full/')
+
+# download_image(Twitpic.image_url('http://twitpic.com/d1ncvp/full/'))
+
+# PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1').each do |e|
+#   puts e
+#   download_image(e)
+# end
+
+# PicTwitter.image_urls('http://twitter.com/ToMeto_M/status/535433969227935744/photo/1').each do |e|
+#   puts e
+#   download_image(e)
+# end
+
+# exit
 
 Pocket.configure do |config|
   config.consumer_key = consumer_key
@@ -112,17 +135,23 @@ info["list"].values.each do |e|
     downloaded = false
 
     if PicTwitter.support?(url)
-      download_image(PicTwitter.image_url(url))
+      PicTwitter.image_urls(url).each do |img_url|
+        download_image(img_url)
+      end
       downloaded = true
     end
 
     if Instagram.support?(url)
-      download_image(Instagram.image_url(url))
+      Instagram.image_urls(url).each do |img_url|
+        download_image(img_url)
+      end
       downloaded = true
     end
 
     if Twitpic.support?(url)
-      download_image(Twitpic.image_url(url))
+      Twitpic.image_urls(url).each do |img_url|
+        download_image(img_url)
+      end
       downloaded = true
     end
 
