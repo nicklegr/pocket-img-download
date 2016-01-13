@@ -39,11 +39,8 @@ module PicTwitter
 
     img_urls = []
 
-    img = doc.css('a.media-thumbnail').first
-    img_urls << img['data-url'] if img
-
-    img = doc.css('div.media-thumbnail').each do |div|
-      img_urls << div['data-url']
+    doc.css('div.js-adaptive-photo').each do |div|
+      img_urls << div['data-image-url']
     end
 
     img_urls.map! do |e|
@@ -96,6 +93,7 @@ end
 # puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/')
 # puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large')
 # puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1/large/')
+# puts PicTwitter.image_urls('http://twitter.com/tamamapapa/status/686947569222586368/photo/1')
 # puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2')
 # puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2#')
 # puts Instagram.image_urls('http://instagram.com/p/nRuMujKpN2/')
