@@ -27,6 +27,11 @@ def download_image(url)
       output.write(data.read)
     end
   end
+
+  if File.size(file_name) == 0
+    File.delete(file_name)
+    raise DownloadError 
+  end
 end
 
 module PicTwitter
