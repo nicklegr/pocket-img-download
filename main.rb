@@ -25,7 +25,7 @@ info = client.retrieve(:detailType => :complete, :count => 200)
 info["list"].values.each do |e|
   # puts "#{e['item_id']}, #{e['given_title']}, #{e['resolved_title']}, #{e['resolved_url']}"
 
-  url = e['resolved_url']
+  url = e['resolved_url'] || e['given_url']
   next unless url
   # puts url
 
