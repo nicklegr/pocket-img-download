@@ -30,30 +30,7 @@ info["list"].values.each do |e|
   # puts url
 
   begin
-    downloaded = false
-
-    if PicTwitter.support?(url)
-      PicTwitter.image_urls(url).each do |img_url|
-        download_image(img_url)
-      end
-      downloaded = true
-    end
-
-    if Instagram.support?(url)
-      Instagram.image_urls(url).each do |img_url|
-        download_image(img_url)
-      end
-      downloaded = true
-    end
-
-    if Twitpic.support?(url)
-      Twitpic.image_urls(url).each do |img_url|
-        download_image(img_url)
-      end
-      downloaded = true
-    end
-
-    if downloaded
+    if download(url)
       # puts "modify #{e['item_id']}"
       client.modify([ { action: 'archive', item_id: e['item_id'] } ])
     end

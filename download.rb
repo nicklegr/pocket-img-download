@@ -2,8 +2,8 @@
 
 require 'open-uri'
 
-class DownloadError < RuntimeError
-end
+require_relative "exception"
+require_relative "services"
 
 def download_image(url)
   file_name = File.basename(url)
@@ -24,4 +24,29 @@ def download_image(url)
     File.delete(file_name)
     raise DownloadError 
   end
+end
+
+def download(url)
+  if PicTwitter.support?(url)
+    PicTwitter.image_urls(url).each do |img_url|
+      download_image(img_url)
+    end
+    return true
+  end
+
+  if Instagram.support?(url)
+    Instagram.image_urls(url).each do |img_url|
+      download_image(img_url)
+    end
+    return true
+  end
+
+  if Twitpic.support?(url)
+    Twitpic.image_urls(url).each do |img_url|
+      download_image(img_url)
+    end
+    return true
+  end
+
+  false
 end

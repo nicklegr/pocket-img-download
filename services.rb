@@ -4,7 +4,7 @@ require 'open-uri'
 require 'bundler/setup'
 Bundler.require
 
-require_relative "download"
+require_relative "exception"
 
 module PicTwitter
   def self.support?(url)

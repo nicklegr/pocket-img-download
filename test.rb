@@ -1,7 +1,6 @@
 # coding: utf-8
 
 require_relative "download"
-require_relative "services"
 
 # test
 puts PicTwitter.image_urls('https://twitter.com/wata_ruh/status/460372514472882176/photo/1')
