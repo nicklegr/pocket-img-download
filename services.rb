@@ -8,7 +8,7 @@ require_relative "exception"
 
 module PicTwitter
   def self.support?(url)
-    url.match(%r|^https?://twitter.com/\w+/status/\d+/photo/\d+|)
+    url.match(%r|^https?://twitter.com/\w+/status(es)?/\d+|)
   end
 
   def self.image_urls(url)
