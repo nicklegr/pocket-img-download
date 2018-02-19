@@ -20,6 +20,8 @@ module PicTwitter
       img_urls << div['data-image-url']
     end
 
+    img_urls.uniq!
+
     img_urls.map! do |e|
       e.sub(%r/:\w+$/, '') + ":orig"
     end
